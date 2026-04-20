@@ -12,61 +12,30 @@ export async function POST(req: NextRequest) {
     const { images = [], inputText = "" } = body
     console.log("images:", images.length)	//とりあえず確認ログ
 
-//     // プロンプト作成
-//     const fullPrompt = `
-// ${PROMPT}
-// 
-// 入力情報:
-// ${inputText}
-// 
-// 画像情報:
-// ${images.join("\n")}
-// `
-// 
-//     const completion = await client.chat.completions.create({
-//       model: "gpt-4o-mini",
-//       messages: [
-//         {
-//           role: "user",
-//           content: fullPrompt,
-//         },
-//       ],
-//       temperature: 0.7,
-//       response_format: { type: "json_object" }, // ←これ
-//     })
+    // プロンプト作成
+    const fullPrompt = `
+${PROMPT}
+
+入力情報:
+${inputText}
+
+画像情報:
+${images.join("\n")}
+`
 
     const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "user",
-          content: [
-            // テキスト
-            { type: "text", text: `${PROMPT}\n${inputText}` },
-
-            // 画像（最大5枚）
-            // ...images.slice(0, 5).map((img: string) => ({
-            ...(images?.slice(0, 5) || []).map((img: string) => ({   // imagesが空ケースの対策
-              type: "image_url",
-              image_url: {
-                url: img,
-              },
-            })),
-          ],
+          content: fullPrompt,
         },
       ],
       temperature: 0.7,
-      response_format: { type: "json_object" },
+      response_format: { type: "json_object" }, // ←これ
     })
 
     const text = completion.choices[0]?.message?.content || ""
-    // 空文字のままJSON.parseしない対策
-    if (!text) {
-      return NextResponse.json(
-        { error: "Empty response from AI" },
-        { status: 500 }
-      )
-    }
 
     // JSONパース（安全対策）
     let parsed

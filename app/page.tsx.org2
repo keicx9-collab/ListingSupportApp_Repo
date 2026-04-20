@@ -1,10 +1,5 @@
-// そのまま差し替えで動く「圧縮＋5枚対応＋プレビュー付き」完成コード
-// 画像最大5枚アップロード
-// 自動圧縮（800px + 品質0.7）
-// プレビュー表示
-// API送信
-// コピー機能
-// まだVision未対応
+// 画像入力有り版のフロントエンド（context_length_exceeded）
+
 
 "use client"
 
@@ -26,52 +21,6 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [images, setImages] = useState<string[]>([])
 
-  // 🔥 画像圧縮関数
-  const compressImage = (file: File): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new Image()
-      const reader = new FileReader()
-
-      reader.onload = (e) => {
-        img.src = e.target?.result as string
-      }
-
-      img.onload = () => {
-        const canvas = document.createElement("canvas")
-        const ctx = canvas.getContext("2d")!
-
-        const maxWidth = 800
-        const scale = maxWidth / img.width
-
-        canvas.width = maxWidth
-        canvas.height = img.height * scale
-
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-
-        const compressed = canvas.toDataURL("image/jpeg", 0.7)
-        resolve(compressed)
-      }
-
-      reader.readAsDataURL(file)
-    })
-  }
-
-  // 🔥 画像アップロード処理
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files) return
-
-    // 最大5枚
-    const limitedFiles = Array.from(files).slice(0, 5)
-
-    const compressedImages = await Promise.all(
-      limitedFiles.map((file) => compressImage(file))
-    )
-
-    setImages(compressedImages)
-  }
-
-  // 🔥 生成処理
   const handleGenerate = async () => {
     setLoading(true)
     setResult(null)
@@ -84,7 +33,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           inputText,
-          images, // ←送る
+          images, // 画像追加
         }),
       })
 
@@ -98,22 +47,21 @@ export default function Home() {
     }
   }
 
-  // 🔥 コピー
   const handleCopy = async () => {
     if (!result) return
 
     const text = `
-${result.title}
+  ${result.title}
 
-${result.description}
+  ${result.description}
 
-${result.hashtags?.join(" ")}
-`
+  ${result.hashtags.join(" ")}
+  `
 
     try {
       await navigator.clipboard.writeText(text)
       alert("コピーしました！")
-    } catch {
+    } catch (err) {
       alert("コピーに失敗しました")
     }
   }
@@ -122,7 +70,7 @@ ${result.hashtags?.join(" ")}
     <div style={{ maxWidth: 800, margin: "40px auto", padding: 20 }}>
       <h1>フリマ出品支援アプリ</h1>
 
-      {/* テキスト入力 */}
+      {/* 入力 */}
       <textarea
         placeholder="商品情報を入力（例：ナイキの黒いスニーカー、使用回数少なめ）"
         value={inputText}
@@ -130,27 +78,47 @@ ${result.hashtags?.join(" ")}
         style={{ width: "100%", height: 100, marginBottom: 10 }}
       />
 
-      {/* 🔥 画像アップロード */}
-      <input type="file" multiple accept="image/*" onChange={handleImageChange} />
+      {/* 画像アップロード */}
+      <input
+        type="file"
+        multiple
+        accept="image/*"
+        onChange={(e) => {
+          const files = e.target.files
+          if (!files) return
 
-      {/* 🔥 プレビュー */}
-      <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
-        {images.map((img, i) => (
-          <img key={i} src={img} width={100} />
-        ))}
-      </div>
+          const readers: Promise<string>[] = []
+
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i]
+            const reader = new FileReader()
+
+            const p = new Promise<string>((resolve) => {
+              reader.onload = () => {
+                resolve(reader.result as string)
+              }
+            })
+
+            reader.readAsDataURL(file)
+            readers.push(p)
+          }
+
+          Promise.all(readers).then((base64s) => {
+            setImages(base64s)
+          })
+        }}
+      />
 
       {/* ボタン */}
-      <button onClick={handleGenerate} disabled={loading} style={{ marginTop: 20 }}>
+      <button onClick={handleGenerate} disabled={loading}>
         {loading ? "生成中..." : "生成する"}
       </button>
 
-      {/* 結果 */}
+      {/* 結果表示 */}
       {result && (
         <div style={{ marginTop: 30 }}>
           <h2>{result.title}</h2>
           <p>{result.description}</p>
-
           <div>
             {result.hashtags?.map((tag, i) => (
               <span key={i} style={{ marginRight: 8 }}>
@@ -158,12 +126,12 @@ ${result.hashtags?.join(" ")}
               </span>
             ))}
           </div>
-
-          <p><b>カテゴリ:</b> {result.categories?.join(", ")}</p>
-          <p><b>ブランド:</b> {result.brands?.join(", ")}</p>
+          <p><b>カテゴリ:</b> {result.categories.join(", ")}</p>
+          <p><b>ブランド:</b> {result.brands.join(", ")}</p>
           <p><b>状態:</b> {result.condition}</p>
           <p><b>価格:</b> {result.price}円</p>
 
+          {/* コピーボタン */}
           <button
             onClick={handleCopy}
             style={{
@@ -172,6 +140,7 @@ ${result.hashtags?.join(" ")}
               backgroundColor: "#333",
               color: "#fff",
               borderRadius: 6,
+              cursor: "pointer",
             }}
           >
             コピーする
@@ -181,4 +150,6 @@ ${result.hashtags?.join(" ")}
     </div>
   )
 }
+
+
 

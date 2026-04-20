@@ -1,36 +1,195 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛍️ Listing Support App（フリマ出品支援アプリ）
 
-## Getting Started
+フリマアプリ（メルカリ・ラクマ等）への出品作業を効率化するためのWebアプリです。
+商品画像と簡単なテキストを入力するだけで、AIが商品説明・タイトル・価格などを自動生成します。
 
-First, run the development server:
+---
+
+## 🚀 Demo
+
+※ デプロイ後にURLを記載
+例）https://your-app.vercel.app
+
+---
+
+## ✨ Features
+
+* 🧠 **AI商品情報生成**
+
+  * 商品名 / 説明文 / カテゴリ / ブランド / 状態 / 価格 / ハッシュタグを自動生成
+
+* 🖼️ **画像解析（Vision対応）**
+
+  * 最大5枚の画像から商品情報を推定
+
+* ⚡ **ワンクリックコピー**
+
+  * 生成結果をそのままフリマアプリに貼り付け可能
+
+* 🧹 **画像自動圧縮**
+
+  * 幅800px / JPEG品質0.7で最適化
+
+* 👀 **画像プレビュー**
+
+  * アップロード画像を即時表示
+
+---
+
+## 🛠 Tech Stack
+
+* **Frontend**: Next.js（App Router）, TypeScript
+* **Backend**: Next.js API Routes
+* **AI**: OpenAI API（gpt-4o-mini）
+* **Dev Tool**: Cursor
+
+---
+
+## 📂 Project Structure
+
+```
+app/
+ ├─ page.tsx                  # UI（入力・表示・コピー）
+ └─ api/
+     └─ generate/
+         └─ route.ts          # AI連携API
+
+lib/
+ └─ prompt.ts                 # プロンプト定義
+```
+
+---
+
+## ⚙️ Setup
+
+### 1. Clone
+
+```bash
+git clone https://github.com/your-username/listing-support-app.git
+cd listing-support-app
+```
+
+---
+
+### 2. Install
+
+```bash
+npm install
+```
+
+---
+
+### 3. Environment Variables
+
+`.env.local` を作成：
+
+```
+OPENAI_API_KEY=your_api_key_here
+```
+
+---
+
+### 4. Run
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+👉 http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🔌 API
 
-## Learn More
+### POST `/api/generate`
 
-To learn more about Next.js, take a look at the following resources:
+#### Request
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```json
+{
+  "inputText": "黒いスニーカー",
+  "images": ["base64画像"]
+}
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+#### Response
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```json
+{
+  "title": "ナイキ 黒スニーカー メンズ",
+  "description": "...",
+  "categories": ["メンズ", "靴"],
+  "brands": ["ナイキ"],
+  "condition": "目立った傷なし",
+  "price": 3000,
+  "hashtags": ["#ナイキ", "#スニーカー"]
+}
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 💡 Key Implementation Points
+
+### 🔹 Vision API対応
+
+* `messages.content` を配列化してテキスト＋画像を同時送信
+* `image_url`形式で画像を渡すことでトークン効率を最適化
+
+---
+
+### 🔹 トークン制限対策
+
+* 画像を直接プロンプトに埋め込まない
+* 最大5枚に制限
+* フロントで画像圧縮
+
+---
+
+### 🔹 JSON安定出力
+
+* `response_format: { type: "json_object" }` を使用
+* パースエラー時のフォールバック実装
+
+---
+
+## 📊 Current Status
+
+| Feature  | Status |
+| -------- | ------ |
+| AI生成     | ✅      |
+| UI       | ✅      |
+| コピー機能    | ✅      |
+| 画像アップロード | ✅      |
+| Vision対応 | ✅      |
+| データ保存    | ❌      |
+
+---
+
+## 🔮 Roadmap
+
+* [ ] Supabaseによる履歴保存
+* [ ] 類似商品検索
+* [ ] UI改善（Tailwind）
+* [ ] 価格最適化ロジック
+* [ ] 出品フォーマット切替（メルカリ / ラクマ）
+
+---
+
+## ⚠️ Notes
+
+* OpenAI APIは従量課金です
+* 画像枚数・サイズによりコストが増加します
+
+---
+
+## 🧑‍💻 Author
+
+**Kei Terada**
+
+---
+
+## 📄 License
+
+TBD
