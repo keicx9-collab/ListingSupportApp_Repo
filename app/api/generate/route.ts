@@ -1,0 +1,71 @@
+import { NextRequest, NextResponse } from "next/server"
+import OpenAI from "openai"
+import { PROMPT } from "@/lib/prompt"
+
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+})
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const { images = [], inputText = "" } = body
+    console.log("images:", images.length)	//とりあえず確認ログ
+
+    // プロンプト作成
+    const fullPrompt = `
+${PROMPT}
+
+入力情報:
+${inputText}
+
+画像情報:
+${images.join("\n")}
+`
+
+    const completion = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: fullPrompt,
+        },
+      ],
+      temperature: 0.7,
+      response_format: { type: "json_object" }, // ←これ
+    })
+
+    const text = completion.choices[0]?.message?.content || ""
+
+    // JSONパース（安全対策）
+    let parsed
+    try {
+      parsed = JSON.parse(text)
+    } catch (e) {
+      // JSON壊れてた場合のフォールバック
+      return NextResponse.json(
+        {
+          error: "JSON parse error",
+          raw: text,
+        },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json(parsed)
+  } catch (error: any) {
+    console.error("API Error:", error)
+
+    return NextResponse.json(
+      {
+        error: "Internal Server Error",
+      },
+      { status: 500 }
+    )
+  }
+}
+
+
+export async function GET() {
+  return new Response("API is working")
+}

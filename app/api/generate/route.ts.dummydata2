@@ -1,0 +1,61 @@
+//OpenAI接続テストwithダミーデータ２
+
+import { NextRequest, NextResponse } from "next/server"
+import OpenAI from "openai"
+
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+})
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const { inputText = "" } = body
+
+    const completion = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: `
+以下の形式でJSONを返してください。
+説明文などの前置きは一切不要です。
+
+{
+  "title": "商品名",
+  "description": "商品説明（200〜400文字）",
+  "categories": ["カテゴリ"],
+  "brands": ["ブランド"],
+  "condition": "状態",
+  "price": 1000,
+  "hashtags": ["#タグ"]
+}
+
+条件:
+- 必ずJSONのみを出力
+- 日本語で出力
+- ハッシュタグは5〜10個
+
+商品情報:
+${inputText}
+`,
+        },
+      ],
+      temperature: 0.7,
+      response_format: { type: "json_object" }, // ←重要
+    })
+
+    const text = completion.choices[0]?.message?.content || ""
+
+    const parsed = JSON.parse(text)
+
+    return NextResponse.json(parsed)
+  } catch (error: any) {
+    console.error(error)
+
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    )
+  }
+}

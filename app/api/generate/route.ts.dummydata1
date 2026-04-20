@@ -1,0 +1,28 @@
+//OpenAI接続テストwithダミーデータ
+
+import { NextRequest, NextResponse } from "next/server"
+import OpenAI from "openai"
+
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+})
+
+export async function POST(req: NextRequest) {
+  const body = await req.json()
+  const { inputText = "" } = body
+
+  const completion = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "user",
+        content: `ナイキのスニーカーの説明文を作って`,
+      },
+    ],
+  })
+
+  return NextResponse.json({
+    raw: completion.choices[0]?.message?.content
+  })
+}
+

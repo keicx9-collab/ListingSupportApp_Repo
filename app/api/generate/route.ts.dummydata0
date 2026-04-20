@@ -1,0 +1,15 @@
+//OpenAI接続テスト前のダミーデータ
+
+import { NextResponse } from "next/server"
+
+export async function POST() {
+  return NextResponse.json({
+    title: "テスト商品",
+    description: "これはテストです",
+    categories: ["メンズ", "靴"],
+    brands: ["ナイキ"],
+    condition: "目立った傷や汚れなし",
+    price: 3000,
+    hashtags: ["#ナイキ", "#スニーカー"]
+  })
+}
