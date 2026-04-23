@@ -4,13 +4,18 @@
 // プレビュー表示
 // API送信
 // コピー機能
-// まだVision未対応
+// Vision対応
+// 認証機能対応
+// 履歴保存・CRUD対応
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase"
 
 type Product = {
+  id?: string
   title: string
   description: string
   categories: string[]
@@ -18,15 +23,53 @@ type Product = {
   condition: string
   price: number
   hashtags: string[]
+  images?: string[]
+  user_id?: string
 }
 
 export default function Home() {
+  const router = useRouter()
+
   const [inputText, setInputText] = useState("")
   const [result, setResult] = useState<Product | null>(null)
+  const [items, setItems] = useState<Product[]>([])
   const [loading, setLoading] = useState(false)
   const [images, setImages] = useState<string[]>([])
+  const [userId, setUserId] = useState<string | null>(null)
 
-  // 🔥 画像圧縮関数
+  // 編集用
+  const [editingItem, setEditingItem] = useState<Product | null>(null)
+  const [editTitle, setEditTitle] = useState("")
+  const [editDesc, setEditDesc] = useState("")
+  const [editTags, setEditTags] = useState("")
+
+  useEffect(() => {
+    const init = async () => {
+      const { data } = await supabase.auth.getSession()
+      const session = data.session
+
+      if (!session) {
+        router.push("/login")
+        return
+      }
+
+      setUserId(session.user.id)
+      fetchItems(session.user.id)
+    }
+
+    init()
+  }, [])
+
+  const fetchItems = async (uid: string) => {
+    const { data } = await supabase
+      .from("products")
+      .select("*")
+      .eq("user_id", uid)
+      .order("created_at", { ascending: false })
+
+    setItems(data || [])
+  }
+
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image()
@@ -48,104 +91,134 @@ export default function Home() {
 
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
 
-        const compressed = canvas.toDataURL("image/jpeg", 0.7)
-        resolve(compressed)
+        resolve(canvas.toDataURL("image/jpeg", 0.7))
       }
 
       reader.readAsDataURL(file)
     })
   }
 
-  // 🔥 画像アップロード処理
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files) return
 
-    // 最大5枚
-    const limitedFiles = Array.from(files).slice(0, 5)
+    const limited = Array.from(files).slice(0, 5)
 
-    const compressedImages = await Promise.all(
-      limitedFiles.map((file) => compressImage(file))
+    const compressed = await Promise.all(
+      limited.map((file) => compressImage(file))
     )
 
-    setImages(compressedImages)
+    setImages(compressed)
   }
 
-  // 🔥 生成処理
   const handleGenerate = async () => {
     setLoading(true)
     setResult(null)
 
     try {
+      const { data } = await supabase.auth.getSession()
+      const session = data.session
+      if (!session) return
+
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({
-          inputText,
-          images, // ←送る
-        }),
+        body: JSON.stringify({ inputText, images }),
       })
 
-      const data = await res.json()
-      setResult(data)
-    } catch (error) {
-      alert("エラーが発生しました")
-      console.error(error)
+      const dataRes = await res.json()
+      setResult(dataRes)
+
+      await supabase.from("products").insert([
+        {
+          user_id: session.user.id,
+          ...dataRes,
+          images,
+        },
+      ])
+
+      fetchItems(session.user.id)
+    } catch (e) {
+      console.error(e)
     } finally {
       setLoading(false)
     }
   }
 
-  // 🔥 コピー
-  const handleCopy = async () => {
-    if (!result) return
+  const handleDelete = async (id: string) => {
+    await supabase.from("products").delete().eq("id", id)
+    if (userId) fetchItems(userId)
+  }
 
+  const openEditModal = (item: Product) => {
+    setEditingItem(item)
+    setEditTitle(item.title)
+    setEditDesc(item.description)
+    setEditTags(item.hashtags?.join(" ") || "")
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingItem) return
+
+    await supabase
+      .from("products")
+      .update({
+        title: editTitle,
+        description: editDesc,
+        hashtags: editTags.split(" "),
+      })
+      .eq("id", editingItem.id)
+
+    setEditingItem(null)
+    if (userId) fetchItems(userId)
+  }
+
+  // 🔥 履歴用コピー（追加）
+  const handleCopyItem = async (item: Product) => {
     const text = `
-${result.title}
+${item.title}
 
-${result.description}
+${item.description}
 
-${result.hashtags?.join(" ")}
+${item.hashtags?.join(" ")}
 `
+    await navigator.clipboard.writeText(text)
+    alert("コピーしました")
+  }
 
-    try {
-      await navigator.clipboard.writeText(text)
-      alert("コピーしました！")
-    } catch {
-      alert("コピーに失敗しました")
-    }
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push("/login")
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: "40px auto", padding: 20 }}>
+    <div style={{ maxWidth: 900, margin: "40px auto", padding: 20 }}>
       <h1>フリマ出品支援アプリ</h1>
 
-      {/* テキスト入力 */}
+      <button onClick={handleLogout}>ログアウト</button>
+
       <textarea
-        placeholder="商品情報を入力（例：ナイキの黒いスニーカー、使用回数少なめ）"
         value={inputText}
         onChange={(e) => setInputText(e.target.value)}
-        style={{ width: "100%", height: 100, marginBottom: 10 }}
+        style={{ width: "100%", height: 100 }}
       />
 
-      {/* 🔥 画像アップロード */}
-      <input type="file" multiple accept="image/*" onChange={handleImageChange} />
+      <input type="file" multiple onChange={handleImageChange} />
 
-      {/* 🔥 プレビュー */}
-      <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 10 }}>
         {images.map((img, i) => (
           <img key={i} src={img} width={100} />
         ))}
       </div>
 
-      {/* ボタン */}
-      <button onClick={handleGenerate} disabled={loading} style={{ marginTop: 20 }}>
+      <button onClick={handleGenerate} disabled={loading}>
         {loading ? "生成中..." : "生成する"}
       </button>
 
-      {/* 結果 */}
+      {/* 🔥 生成結果（コピー削除済み） */}
       {result && (
         <div style={{ marginTop: 30 }}>
           <h2>{result.title}</h2>
@@ -153,32 +226,75 @@ ${result.hashtags?.join(" ")}
 
           <div>
             {result.hashtags?.map((tag, i) => (
-              <span key={i} style={{ marginRight: 8 }}>
-                {tag}
-              </span>
+              <span key={i}>{tag} </span>
             ))}
           </div>
 
           <p><b>カテゴリ:</b> {result.categories?.join(", ")}</p>
           <p><b>ブランド:</b> {result.brands?.join(", ")}</p>
-          <p><b>状態:</b> {result.condition}</p>
           <p><b>価格:</b> {result.price}円</p>
 
-          <button
-            onClick={handleCopy}
-            style={{
-              marginTop: 20,
-              padding: "10px 16px",
-              backgroundColor: "#333",
-              color: "#fff",
-              borderRadius: 6,
-            }}
-          >
-            コピーする
-          </button>
+        </div>
+      )}
+
+      <h2>履歴</h2>
+
+      {items.length === 0 && <p>履歴がありません</p>}
+
+      {items.map((item) => (
+        <div key={item.id} style={{ border: "1px solid #ccc", marginTop: 10, padding: 10 }}>
+          <h3>{item.title}</h3>
+          <p>{item.description}</p>
+
+          <div>
+            {item.hashtags?.map((tag, i) => (
+              <span key={i}>{tag} </span>
+            ))}
+          </div>
+
+          <p><b>カテゴリ:</b> {item.categories?.join(", ")}</p>
+          <p><b>ブランド:</b> {item.brands?.join(", ")}</p>
+          <p><b>価格:</b> {item.price}円</p>
+
+          <div style={{ display: "flex", gap: 5 }}>
+            {item.images?.map((img, i) => (
+              <img key={i} src={img} width={80} />
+            ))}
+          </div>
+
+          <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={() => openEditModal(item)}>編集</button>
+            <button onClick={() => handleDelete(item.id!)}>削除</button>
+            <button onClick={() => handleCopyItem(item)}>コピー</button>
+          </div>
+        </div>
+      ))}
+
+      {/* モーダル */}
+      {editingItem && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          background: "rgba(0,0,0,0.5)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center"
+        }}>
+          <div style={{ background: "#fff", padding: 20, borderRadius: 8, width: 500 }}>
+            <h2>編集</h2>
+
+            <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} style={{ width: "100%", marginBottom: 10 }} />
+            <textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} style={{ width: "100%", height: 150, marginBottom: 10 }} />
+            <input value={editTags} onChange={(e) => setEditTags(e.target.value)} style={{ width: "100%", marginBottom: 10 }} />
+
+            <button onClick={handleSaveEdit}>保存</button>
+            <button onClick={() => setEditingItem(null)}>キャンセル</button>
+          </div>
         </div>
       )}
     </div>
   )
 }
-
