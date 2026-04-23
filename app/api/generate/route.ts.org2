@@ -3,43 +3,41 @@ import OpenAI from "openai"
 import { PROMPT } from "@/lib/prompt"
 import { createClient } from "@supabase/supabase-js"
 
-// 🔐 Supabase（サーバー用）
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// 🤖 OpenAI
+export async function POST(req: NextRequest) {
+  const authHeader = req.headers.get("authorization")
+
+  if (!authHeader) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const token = authHeader.replace("Bearer ", "")
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser(token)
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  // 👇ここから通常処理
+}
+
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
 export async function POST(req: NextRequest) {
   try {
-    // 🔐 認証チェック
-    const authHeader = req.headers.get("authorization")
-
-    if (!authHeader) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const token = authHeader.replace("Bearer ", "")
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser(token)
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    // 📦 リクエスト取得
     const body = await req.json()
     const { images = [], inputText = "" } = body
+    console.log("images:", images.length)	//とりあえず確認ログ
 
-    console.log("images:", images.length)
-
-    // 🤖 OpenAI実行
     const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -50,7 +48,8 @@ export async function POST(req: NextRequest) {
             { type: "text", text: `${PROMPT}\n${inputText}` },
 
             // 画像（最大5枚）
-            ...(images?.slice(0, 5) || []).map((img: string) => ({
+            // ...images.slice(0, 5).map((img: string) => ({
+            ...(images?.slice(0, 5) || []).map((img: string) => ({   // imagesが空ケースの対策
               type: "image_url",
               image_url: {
                 url: img,
@@ -64,8 +63,7 @@ export async function POST(req: NextRequest) {
     })
 
     const text = completion.choices[0]?.message?.content || ""
-
-    // 空対策
+    // 空文字のままJSON.parseしない対策
     if (!text) {
       return NextResponse.json(
         { error: "Empty response from AI" },
@@ -73,11 +71,12 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // JSONパース
+    // JSONパース（安全対策）
     let parsed
     try {
       parsed = JSON.parse(text)
-    } catch {
+    } catch (e) {
+      // JSON壊れてた場合のフォールバック
       return NextResponse.json(
         {
           error: "JSON parse error",
@@ -87,19 +86,20 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // 🎉 成功レスポンス
     return NextResponse.json(parsed)
   } catch (error: any) {
     console.error("API Error:", error)
 
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      {
+        error: "Internal Server Error",
+      },
       { status: 500 }
     )
   }
 }
 
-// 動作確認用
+
 export async function GET() {
   return new Response("API is working")
 }

@@ -1,66 +1,56 @@
-# 🛍️ Listing Support App（フリマ出品支援アプリ）
+# Listing Support App（フリマ出品支援アプリ）
 
-フリマアプリ（メルカリ・ラクマ等）への出品作業を効率化するためのWebアプリです。
-商品画像と簡単なテキストを入力するだけで、AIが商品説明・タイトル・価格などを自動生成します。
+フリマアプリ（メルカリ・ラクマ等）への出品作業を効率化するための Web アプリです。商品画像と簡単なテキストを入力するだけで、AI が商品説明・タイトル・価格などを自動生成します。
 
----
+## Demo
 
-## 🚀 Demo
+**URL:** [https://listing-support-app-repo.vercel.app/](https://listing-support-app-repo.vercel.app/)
 
-※ デプロイ後にURLを記載
-例）https://your-app.vercel.app
+**デモ用アカウント**
 
----
+| 項目 | 値 |
+|------|-----|
+| Email | `guest@listingsupportapp.jp` |
+| Password | `password123` |
 
-## ✨ Features
+## Features
 
-* 🧠 **AI商品情報生成**
+- **AI 商品情報生成** — 商品名 / 説明文 / カテゴリ / ブランド / 状態 / 価格 / ハッシュタグを自動生成
+- **画像解析（Vision 対応）** — 最大 5 枚の画像から商品情報を推定
+- **ワンクリックコピー** — 履歴からワンクリックでコピー可能
+- **画像自動圧縮** — 幅 800px / JPEG 品質 0.7 で最適化
+- **画像プレビュー** — アップロード画像を即時表示
+- **ユーザー認証** — メールアドレス + パスワードログイン（Supabase Auth）
+- **履歴保存** — 生成結果を DB に保存し、ユーザーごとに管理
+- **CRUD** — 履歴の編集（タイトル / 説明文 / ハッシュタグ）、削除、一覧表示
 
-  * 商品名 / 説明文 / カテゴリ / ブランド / 状態 / 価格 / ハッシュタグを自動生成
+## Tech Stack
 
-* 🖼️ **画像解析（Vision対応）**
+| 区分 | 技術 |
+|------|------|
+| Frontend | Next.js（App Router）, TypeScript, Tailwind CSS |
+| Backend | Next.js API Routes |
+| AI | OpenAI API（gpt-4o-mini） |
+| Database | Supabase（PostgreSQL） |
+| Auth | Supabase Auth |
 
-  * 最大5枚の画像から商品情報を推定
-
-* ⚡ **ワンクリックコピー**
-
-  * 生成結果をそのままフリマアプリに貼り付け可能
-
-* 🧹 **画像自動圧縮**
-
-  * 幅800px / JPEG品質0.7で最適化
-
-* 👀 **画像プレビュー**
-
-  * アップロード画像を即時表示
-
----
-
-## 🛠 Tech Stack
-
-* **Frontend**: Next.js（App Router）, TypeScript
-* **Backend**: Next.js API Routes
-* **AI**: OpenAI API（gpt-4o-mini）
-* **Dev Tool**: Cursor
-
----
-
-## 📂 Project Structure
+## Project Structure
 
 ```
 app/
- ├─ page.tsx                  # UI（入力・表示・コピー）
- └─ api/
-     └─ generate/
-         └─ route.ts          # AI連携API
+├── page.tsx              # メイン UI（生成・履歴・CRUD）
+├── login/
+│   └── page.tsx          # ログイン画面
+└── api/
+    └── generate/
+        └── route.ts      # AI 連携 API（認証付き）
 
 lib/
- └─ prompt.ts                 # プロンプト定義
+├── prompt.ts             # プロンプト定義
+└── supabase.ts           # Supabase クライアント
 ```
 
----
-
-## ⚙️ Setup
+## Setup
 
 ### 1. Clone
 
@@ -69,25 +59,24 @@ git clone https://github.com/your-username/listing-support-app.git
 cd listing-support-app
 ```
 
----
-
 ### 2. Install
 
 ```bash
 npm install
 ```
 
----
-
 ### 3. Environment Variables
 
-`.env.local` を作成：
+プロジェクトルートに `.env.local` を作成し、次を設定します。
 
-```
+```env
 OPENAI_API_KEY=your_api_key_here
-```
 
----
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+```
 
 ### 4. Run
 
@@ -95,15 +84,13 @@ OPENAI_API_KEY=your_api_key_here
 npm run dev
 ```
 
-👉 http://localhost:3000
+ブラウザで [http://localhost:3000](http://localhost:3000) を開きます。
 
----
+## API
 
-## 🔌 API
+### `POST /api/generate`
 
-### POST `/api/generate`
-
-#### Request
+**Request**
 
 ```json
 {
@@ -112,9 +99,7 @@ npm run dev
 }
 ```
 
----
-
-#### Response
+**Response**
 
 ```json
 {
@@ -128,68 +113,66 @@ npm run dev
 }
 ```
 
----
+## Database（Supabase）
 
-## 💡 Key Implementation Points
+### `products` テーブル
 
-### 🔹 Vision API対応
+| カラム | 型 |
+|--------|-----|
+| `id` | uuid |
+| `user_id` | uuid |
+| `title` | text |
+| `description` | text |
+| `categories` | text[] |
+| `brands` | text[] |
+| `condition` | text |
+| `price` | int |
+| `hashtags` | text[] |
+| `images` | text[] |
+| `created_at` | timestamp |
 
-* `messages.content` を配列化してテキスト＋画像を同時送信
-* `image_url`形式で画像を渡すことでトークン効率を最適化
+### RLS（Row Level Security）
 
----
+Row Level Security を有効化し、`user_id = auth.uid()` に基づくポリシーを設定します。
 
-### 🔹 トークン制限対策
+## Key Implementation Points
 
-* 画像を直接プロンプトに埋め込まない
-* 最大5枚に制限
-* フロントで画像圧縮
+- **Vision API** — `messages.content` を配列化し、テキストと画像を同時送信。`image_url` 形式で画像を渡してトークン効率を最適化。
+- **トークン制限対策** — 画像をプロンプトに直接埋め込まない、最大 5 枚、フロントで画像圧縮。
+- **JSON 安定出力** — `response_format: { type: "json_object" }` を使用。パースエラー時のフォールバックを実装。
+- **認証付き API** — Bearer トークンでユーザー認証し、未認証アクセスをブロック。
 
----
+## Current Status
 
-### 🔹 JSON安定出力
+| Feature | Status |
+|---------|--------|
+| AI 生成 | ✅ |
+| UI | ✅ |
+| コピー機能 | ✅ |
+| 画像アップロード | ✅ |
+| Vision 対応 | ✅ |
+| データ保存 | ✅ |
+| 認証 | ✅ |
+| CRUD | ✅ |
 
-* `response_format: { type: "json_object" }` を使用
-* パースエラー時のフォールバック実装
+## Roadmap
 
----
+- UI 改善（Tailwind）
+- タグ入力のチップ化
+- 検索・フィルタ機能
+- 画像のクラウド保存（Supabase Storage）
+- 価格最適化ロジック
+- 出品フォーマット切替（メルカリ / ラクマ）
 
-## 📊 Current Status
+## Notes
 
-| Feature  | Status |
-| -------- | ------ |
-| AI生成     | ✅      |
-| UI       | ✅      |
-| コピー機能    | ✅      |
-| 画像アップロード | ✅      |
-| Vision対応 | ✅      |
-| データ保存    | ❌      |
+- OpenAI API は従量課金です。
+- 画像枚数・サイズによりコストが増加します。
 
----
+## Author
 
-## 🔮 Roadmap
+Kei Terada
 
-* [ ] Supabaseによる履歴保存
-* [ ] 類似商品検索
-* [ ] UI改善（Tailwind）
-* [ ] 価格最適化ロジック
-* [ ] 出品フォーマット切替（メルカリ / ラクマ）
-
----
-
-## ⚠️ Notes
-
-* OpenAI APIは従量課金です
-* 画像枚数・サイズによりコストが増加します
-
----
-
-## 🧑‍💻 Author
-
-**Kei Terada**
-
----
-
-## 📄 License
+## License
 
 TBD
