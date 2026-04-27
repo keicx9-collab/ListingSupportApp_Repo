@@ -4,6 +4,7 @@
 
 ## 前提
 
+- **開く URL:** Playwright の既定 `baseURL` は **`http://localhost:3000`**。`127.0.0.1` は `localhost` と別オリジン扱いで、Supabase のセッション／リダイレクト設定と合わずログインできないことがあります。別 URL を使う場合は `PLAYWRIGHT_BASE_URL` を設定。
 - ブラウザ: `npx playwright install`（未実行なら先に実行）
 - 開発用 Supabase: `.env.local` の `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` があり、**インターネット経由で Supabase に到達できる**こと
 - ログイン系: 既定では README のデモ ID（`guest@listingsupportapp.jp` / `password123`）を使います。プロジェクトに該当ユーザーがいない場合は `.env.local` に `E2E_USER_EMAIL` / `E2E_USER_PASSWORD` を上書き

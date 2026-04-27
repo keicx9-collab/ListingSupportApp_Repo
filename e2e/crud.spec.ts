@@ -5,7 +5,7 @@ import { loginAsE2EUser } from "./helpers/login"
 import { mockProductA } from "./helpers/mocks"
 import { installGenerateJsonMock } from "./helpers/routes"
 
-const base = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000"
+const base = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000"
 
 test.describe("TC-CRUD 履歴の編集・削除・コピー", () => {
   test.beforeEach(async ({ page }) => {

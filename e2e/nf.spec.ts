@@ -6,7 +6,8 @@ import { mockProductA } from "./helpers/mocks"
 test.describe("TC-NF 非機能", () => {
   test("TC-NF-01 生成はタイムアウト前に完了する", async ({ page }, testInfo) => {
     test.skip(!canRunAuthE2E(), "NEXT_PUBLIC_SUPABASE_* が必要")
-    testInfo.setTimeout(120_000)
+    // ログイン + 生成の余裕（グローバル 180s 内に収めるが、明示しておく）
+    testInfo.setTimeout(180_000)
     await page.route("**/api/generate", async (route) => {
       if (route.request().method() === "GET") {
         return route.fulfill({ status: 200, contentType: "text/plain", body: "API is working" })

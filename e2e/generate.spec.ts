@@ -1,12 +1,16 @@
 import { test, expect } from "@playwright/test"
-import { canRunAuthE2E } from "./helpers/env"
+import { canRunAuthE2E, hasCleanupEnv } from "./helpers/env"
+import { clearProductsByUserEmail } from "./helpers/cleanup"
 import { loginAsE2EUser } from "./helpers/login"
 import { mockProductA, mockProductB } from "./helpers/mocks"
 import { installGenerateJsonMock } from "./helpers/routes"
 
 test.describe("TC-GEN 生成", () => {
-  test.beforeEach(() => {
+  test.beforeEach(async () => {
     test.skip(!canRunAuthE2E(), "NEXT_PUBLIC_SUPABASE_* が .env.local に必要")
+    if (hasCleanupEnv()) {
+      await clearProductsByUserEmail()
+    }
   })
 
   test("TC-GEN-01 補助テキストのみで商品情報が表示される", async ({ page }) => {
@@ -14,12 +18,12 @@ test.describe("TC-GEN 生成", () => {
     await loginAsE2EUser(page)
     await page.locator("textarea").first().fill("黒いスニーカー")
     await page.getByRole("button", { name: "生成する" }).click()
-    await expect(page.getByRole("heading", { name: "E2E_モック商品_A" })).toBeVisible({
+    await expect(page.locator("h2", { hasText: "E2E_モック商品_A" })).toBeVisible({
       timeout: 30000,
     })
-    await expect(page.getByText("カテゴリ:")).toBeVisible()
-    await expect(page.getByText("ブランド:")).toBeVisible()
-    await expect(page.getByText(/価格:/)).toBeVisible()
+    await expect(page.getByText("カテゴリ:").first()).toBeVisible()
+    await expect(page.getByText("ブランド:").first()).toBeVisible()
+    await expect(page.getByText(/価格:/).first()).toBeVisible()
   })
 
   test("TC-GEN-02 生成中はボタンが生成中...で無効", async ({ page }) => {
@@ -42,7 +46,7 @@ test.describe("TC-GEN 生成", () => {
     await btn.click()
     await expect(page.getByRole("button", { name: "生成中..." })).toBeVisible()
     await expect(page.getByRole("button", { name: "生成中..." })).toBeDisabled()
-    await expect(page.getByRole("heading", { name: "E2E_モック商品_A" })).toBeVisible({
+    await expect(page.locator("h2", { hasText: "E2E_モック商品_A" })).toBeVisible({
       timeout: 20000,
     })
   })
@@ -66,15 +70,14 @@ test.describe("TC-GEN 生成", () => {
     })
     await loginAsE2EUser(page)
     await page.getByRole("button", { name: "生成する" }).click()
-    await expect(page.getByRole("heading", { name: "E2E_モック商品_A" })).toBeVisible({
+    await expect(page.locator("h2", { hasText: "E2E_モック商品_A" })).toBeVisible({
       timeout: 30000,
     })
     const second = page.getByRole("button", { name: "生成する" })
     await second.click()
-    await expect(
-      page.getByRole("heading", { name: "E2E_モック商品_A" })
-    ).toBeHidden({ timeout: 5000 })
-    await expect(page.getByRole("heading", { name: "E2E_モック商品_B" })).toBeVisible({
+    // 直近の生成結果のタイトルは h2。履歴の h3 とは分ける
+    await expect(page.locator("h2", { hasText: "E2E_モック商品_A" })).toBeHidden({ timeout: 5000 })
+    await expect(page.locator("h2", { hasText: "E2E_モック商品_B" })).toBeVisible({
       timeout: 30000,
     })
   })
@@ -90,7 +93,7 @@ test.describe("TC-GEN 生成", () => {
       ])
     await expect(page.locator('img[width="100"]')).toHaveCount(2)
     await page.getByRole("button", { name: "生成する" }).click()
-    await expect(page.getByRole("heading", { name: "E2E_モック商品_A" })).toBeVisible({
+    await expect(page.locator("h2", { hasText: "E2E_モック商品_A" })).toBeVisible({
       timeout: 30000,
     })
     const hist = page.getByRole("heading", { name: "履歴" })
