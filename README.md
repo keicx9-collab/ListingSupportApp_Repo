@@ -44,7 +44,9 @@
 
 ```text
 app/
-├── page.tsx              # メイン UI（入力・今回の生成結果・履歴・編集モーダル）
+├── page.tsx              # メイン UI（入力・今回の生成結果・編集モーダル）
+├── components/
+│   └── HistoryList.tsx  # 履歴一覧
 ├── layout.tsx, globals.css
 ├── login/
 │   └── page.tsx          # ログイン / 新規登録
@@ -118,7 +120,7 @@ npm run dev
 | `npm run test:e2e:ui` | Playwright UI モード |
 | `npm run test:e2e:headed` | ヘッド付きで実行 |
 
-E2E の前提・失敗例は [e2e/README.md](e2e/README.md) を参照。直近の全件成否・所要の記録は [docs/e2e/e2e-test-run-summary.md](docs/e2e/e2e-test-run-summary.md) を手で更新する運用です。
+E2E の前提・失敗例は [e2e/README.md](e2e/README.md) を参照。直近の全件成否・所要の記録は [docs/e2e/e2e-test-run-summary.md](docs/e2e/e2e-test-run-summary.md) を手で更新する運用です。**サマリを更新した run のあと**、本 README の E2E 件数・所要の目安・上記のプロジェクト構造の説明など、矛盾がないか **README も併せて直す**（手順の詳細は [AGENTS.md](AGENTS.md) の E2E ワークフロー）。
 
 ### その他のスクリプト
 
