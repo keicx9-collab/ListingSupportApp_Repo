@@ -289,10 +289,9 @@ ${item.hashtags?.join(" ")}
                 <p className="mt-2 whitespace-pre-wrap text-zinc-800 leading-relaxed">
                   {result.description}
                 </p>
-                <div
-                  className="my-4 border-t border-zinc-200"
-                  role="separator"
-                  aria-hidden
+                <hr
+                  className="my-4 border-0 border-t border-zinc-200"
+                  aria-hidden={true}
                 />
                 <div className="space-y-2">
                   <div className="flex flex-wrap gap-1.5">
@@ -352,10 +351,9 @@ ${item.hashtags?.join(" ")}
                   <p className="mt-2 text-base text-zinc-800 leading-relaxed whitespace-pre-wrap">
                     {item.description}
                   </p>
-                  <div
-                    className="my-3 border-t border-zinc-200"
-                    role="separator"
-                    aria-hidden
+                  <hr
+                    className="my-3 border-0 border-t border-zinc-200"
+                    aria-hidden={true}
                   />
                   <div className="min-h-0 flex-1 space-y-2">
                     <div className="flex flex-wrap gap-1.5">

@@ -6,47 +6,47 @@
 
 | 項目 | 値 |
 |------|-----|
-| 実行日時 | 直近成功 run（`npm run test:e2e`、ローカル。日付は `git` 履歴と照合可） |
+| 実行日時 | 本ファイル最終更新: 直近の `npm run test:e2e` 全件成功 run（`app/page.tsx` の区切りを `<hr>` へ変更した状態を含む） |
 | コマンド | `npm run test:e2e`（= `playwright test`） |
 | Playwright | 1.59.1 |
 | プロジェクト | `chromium`（Desktop Chrome） |
 | ワーカー | 1（履歴等の同ユーザ干渉を避けるため） |
 | 合計 / 成功 / 失敗 / スキップ | **28 / 28 / 0 / 0** |
-| 合計所要（レポート上） | 約 27.7s（回によって ± 数秒） |
+| 合計所要（レポート上） | 約 31.5s（回によって ± 数秒） |
 | 前提 | `playwright.config.ts` により `npm run dev` 起動、`.env.local` 注入。認証系・DB 掃除系は Supabase 認証情報・`SUPABASE_SERVICE_ROLE_KEY` 等の条件あり（各 spec の `test.skip` 参照） |
 
 ## 全テストケースと結果
 
 | # | ファイル | describe（グループ） | テストケース | 結果 | 所要（概算） |
 |---|----------|----------------------|-------------|------|-------------|
-| 1 | `e2e/api.spec.ts` | TC-API /api/generate | TC-API-03 GET はヘルスを返す | 成功 | 41ms |
-| 2 | `e2e/api.spec.ts` | TC-API /api/generate | TC-API-01 Authorization なしの POST は 401 | 成功 | 14ms |
-| 3 | `e2e/api.spec.ts` | TC-API /api/generate | TC-API-02 不正な Bearer では 401 | 成功 | 142ms |
-| 4 | `e2e/auth.spec.ts` | TC-AUTH 認証・ルーティング | TC-AUTH-01 未認証では `/` から `/login` に遷移する | 成功 | 611ms |
-| 5 | `e2e/auth.spec.ts` | TC-AUTH 認証・ルーティング | TC-AUTH-02 正しいパスワードでログインできる | 成功 | 3.6s |
-| 6 | `e2e/auth.spec.ts` | TC-AUTH 認証・ルーティング | TC-AUTH-03 誤ったパスワードではログインできない | 成功 | 587ms |
-| 7 | `e2e/auth.spec.ts` | TC-AUTH 認証・ルーティング | TC-AUTH-04 新規登録: 重複メール等で失敗アラート | 成功 | 485ms |
-| 8 | `e2e/auth.spec.ts` | TC-AUTH 認証・ルーティング | TC-AUTH-04 新規登録: 新規アドレスなら登録完了系メッセージ | 成功 | 567ms |
-| 9 | `e2e/auth.spec.ts` | TC-AUTH 認証・ルーティング | TC-AUTH-05 ログアウトで `/login` へ戻る | 成功 | 801ms |
-| 10 | `e2e/auth.spec.ts` | TC-AUTH 認証・ルーティング | TC-AUTH-06 ログイン済みで `/login` を開ける | 成功 | 688ms |
-| 11 | `e2e/crud.spec.ts` | TC-CRUD 履歴の編集・削除・コピー | TC-CRUD-01 編集保存で反映される | 成功 | 1.1s |
-| 12 | `e2e/crud.spec.ts` | TC-CRUD 履歴の編集・削除・コピー | TC-CRUD-02 タグをスペース区切りで保存 | 成功 | 1.1s |
-| 13 | `e2e/crud.spec.ts` | TC-CRUD 履歴の編集・削除・コピー | TC-CRUD-03 キャンセルで変更されない | 成功 | 1.0s |
-| 14 | `e2e/crud.spec.ts` | TC-CRUD 履歴の編集・削除・コピー | TC-CRUD-04 削除で行が消える | 成功 | 996ms |
-| 15 | `e2e/crud.spec.ts` | TC-CRUD 履歴の編集・削除・コピー | TC-CRUD-05 コピーでアラートとクリップボード | 成功 | 926ms |
-| 16 | `e2e/errors.spec.ts` | TC-ERR エラー UI | TC-ERR-01 API が 500 のとき（成功用タイトルは出ない想定） | 成功 | 853ms |
-| 17 | `e2e/generate.spec.ts` | TC-GEN 生成 | TC-GEN-01 補助テキストのみで商品情報が表示される | 成功 | 860ms |
+| 1 | `e2e/api.spec.ts` | TC-API /api/generate | TC-API-03 GET はヘルスを返す | 成功 | 217ms |
+| 2 | `e2e/api.spec.ts` | TC-API /api/generate | TC-API-01 Authorization なしの POST は 401 | 成功 | 21ms |
+| 3 | `e2e/api.spec.ts` | TC-API /api/generate | TC-API-02 不正な Bearer では 401 | 成功 | 462ms |
+| 4 | `e2e/auth.spec.ts` | TC-AUTH 認証・ルーティング | TC-AUTH-01 未認証では `/` から `/login` に遷移する | 成功 | 713ms |
+| 5 | `e2e/auth.spec.ts` | TC-AUTH 認証・ルーティング | TC-AUTH-02 正しいパスワードでログインできる | 成功 | 872ms |
+| 6 | `e2e/auth.spec.ts` | TC-AUTH 認証・ルーティング | TC-AUTH-03 誤ったパスワードではログインできない | 成功 | 697ms |
+| 7 | `e2e/auth.spec.ts` | TC-AUTH 認証・ルーティング | TC-AUTH-04 新規登録: 重複メール等で失敗アラート | 成功 | 557ms |
+| 8 | `e2e/auth.spec.ts` | TC-AUTH 認証・ルーティング | TC-AUTH-04 新規登録: 新規アドレスなら登録完了系メッセージ | 成功 | 1.4s |
+| 9 | `e2e/auth.spec.ts` | TC-AUTH 認証・ルーティング | TC-AUTH-05 ログアウトで `/login` へ戻る | 成功 | 911ms |
+| 10 | `e2e/auth.spec.ts` | TC-AUTH 認証・ルーティング | TC-AUTH-06 ログイン済みで `/login` を開ける | 成功 | 772ms |
+| 11 | `e2e/crud.spec.ts` | TC-CRUD 履歴の編集・削除・コピー | TC-CRUD-01 編集保存で反映される | 成功 | 1.3s |
+| 12 | `e2e/crud.spec.ts` | TC-CRUD 履歴の編集・削除・コピー | TC-CRUD-02 タグをスペース区切りで保存 | 成功 | 1.4s |
+| 13 | `e2e/crud.spec.ts` | TC-CRUD 履歴の編集・削除・コピー | TC-CRUD-03 キャンセルで変更されない | 成功 | 1.1s |
+| 14 | `e2e/crud.spec.ts` | TC-CRUD 履歴の編集・削除・コピー | TC-CRUD-04 削除で行が消える | 成功 | 1.1s |
+| 15 | `e2e/crud.spec.ts` | TC-CRUD 履歴の編集・削除・コピー | TC-CRUD-05 コピーでアラートとクリップボード | 成功 | 1.2s |
+| 16 | `e2e/errors.spec.ts` | TC-ERR エラー UI | TC-ERR-01 API が 500 のとき（成功用タイトルは出ない想定） | 成功 | 922ms |
+| 17 | `e2e/generate.spec.ts` | TC-GEN 生成 | TC-GEN-01 補助テキストのみで商品情報が表示される | 成功 | 934ms |
 | 18 | `e2e/generate.spec.ts` | TC-GEN 生成 | TC-GEN-02 生成中はボタンが生成中...で無効 | 成功 | 3.7s |
-| 19 | `e2e/generate.spec.ts` | TC-GEN 生成 | TC-GEN-03 再生成時に直前の結果表示が消える | 成功 | 1.1s |
-| 20 | `e2e/generate.spec.ts` | TC-GEN 生成 | TC-GEN-04 画像付きで生成し履歴に反映される | 成功 | 1.2s |
-| 21 | `e2e/history.spec.ts` | TC-HIST 履歴 | TC-HIST-01 商品が0件のとき 履歴がありません | 成功 | 752ms |
-| 22 | `e2e/history.spec.ts` | TC-HIST 履歴 | TC-HIST-02 生成後に履歴へ反映される | 成功 | 890ms |
-| 23 | `e2e/history.spec.ts` | TC-HIST 履歴 | TC-HIST-03 履歴行に 編集・削除・コピー | 成功 | 1.1s |
-| 24 | `e2e/images.spec.ts` | TC-IMG 画像 | TC-IMG-01 プレビュー（幅100px）が並ぶ | 成功 | 687ms |
-| 25 | `e2e/images.spec.ts` | TC-IMG 画像 | TC-IMG-02 6枚選んでも5枚までに制限 | 成功 | 815ms |
-| 26 | `e2e/images.spec.ts` | TC-IMG 画像 | TC-IMG-03 リクエスト body に data: JPEG 画像が含まれる | 成功 | 717ms |
-| 27 | `e2e/nf.spec.ts` | TC-NF 非機能 | TC-NF-01 生成はタイムアウト前に完了する | 成功 | 832ms |
-| 28 | `e2e/nf.spec.ts` | TC-NF 非機能 | TC-NF-02 デスクトップ Chromium プロジェクトで実行 | 成功 | 2ms |
+| 19 | `e2e/generate.spec.ts` | TC-GEN 生成 | TC-GEN-03 再生成時に直前の結果表示が消える | 成功 | 1.2s |
+| 20 | `e2e/generate.spec.ts` | TC-GEN 生成 | TC-GEN-04 画像付きで生成し履歴に反映される | 成功 | 1.5s |
+| 21 | `e2e/history.spec.ts` | TC-HIST 履歴 | TC-HIST-01 商品が0件のとき 履歴がありません | 成功 | 972ms |
+| 22 | `e2e/history.spec.ts` | TC-HIST 履歴 | TC-HIST-02 生成後に履歴へ反映される | 成功 | 955ms |
+| 23 | `e2e/history.spec.ts` | TC-HIST 履歴 | TC-HIST-03 履歴行に 編集・削除・コピー | 成功 | 938ms |
+| 24 | `e2e/images.spec.ts` | TC-IMG 画像 | TC-IMG-01 プレビュー（幅100px）が並ぶ | 成功 | 714ms |
+| 25 | `e2e/images.spec.ts` | TC-IMG 画像 | TC-IMG-02 6枚選んでも5枚までに制限 | 成功 | 850ms |
+| 26 | `e2e/images.spec.ts` | TC-IMG 画像 | TC-IMG-03 リクエスト body に data: JPEG 画像が含まれる | 成功 | 774ms |
+| 27 | `e2e/nf.spec.ts` | TC-NF 非機能 | TC-NF-01 生成はタイムアウト前に完了する | 成功 | 847ms |
+| 28 | `e2e/nf.spec.ts` | TC-NF 非機能 | TC-NF-02 デスクトップ Chromium プロジェクトで実行 | 成功 | 1ms |
 
 ## 補足
 
