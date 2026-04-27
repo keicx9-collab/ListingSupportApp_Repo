@@ -313,7 +313,8 @@ ${item.hashtags?.join(" ")}
                     {result.brands?.join(", ")}
                   </p>
                   <p className="text-zinc-800">
-                    <span className="font-medium">価格:</span> {result.price}円
+                    <span className="font-medium">価格:</span>{" "}
+                    {String(result.price)}円
                   </p>
                 </div>
               </div>
@@ -336,11 +337,12 @@ ${item.hashtags?.join(" ")}
         </section>
       </div>
 
-          {items.length === 0 ? (
+          {items.length === 0 && (
             <p className="rounded-xl border border-dashed border-zinc-300 bg-white/80 px-4 py-8 text-center text-base text-zinc-500">
               履歴がありません
             </p>
-          ) : (
+          )}
+          {items.length > 0 && (
             <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {items.map((item) => (
                 <li
@@ -377,7 +379,8 @@ ${item.hashtags?.join(" ")}
                       {item.brands?.join(", ")}
                     </p>
                     <p className="text-base text-zinc-800">
-                      <span className="font-medium">価格:</span> {item.price}円
+                      <span className="font-medium">価格:</span>{" "}
+                      {String(item.price)}円
                     </p>
                     {item.images && item.images.length > 0 && (
                       <div className="flex flex-wrap gap-2 pt-1">
