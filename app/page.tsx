@@ -334,6 +334,8 @@ ${item.hashtags?.join(" ")}
             </h2>
             <span className="text-base text-zinc-500">{items.length}件</span>
           </div>
+        </section>
+      </div>
 
           {items.length === 0 ? (
             <p className="rounded-xl border border-dashed border-zinc-300 bg-white/80 px-4 py-8 text-center text-base text-zinc-500">
