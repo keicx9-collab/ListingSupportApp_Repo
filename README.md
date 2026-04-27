@@ -105,7 +105,7 @@ npm run dev
 | コマンド | 内容 |
 |----------|------|
 | `npm run dev` | 開発サーバー（Turbopack） |
-| `npm run build` / `npm run start` | 本番ビルド / 本番起動 |
+| `npm run build` / `npm run start` | 本番ビルド（`next build --webpack`）/ 本番起動。Vercel では既定の Turbopack ビルドで `app/page.tsx` が解釈に失敗することがあるため Webpack を使用 |
 | `npm run lint` | ESLint |
 | `npm run test:e2e` | Playwright 全 28 ケース（`next dev` を Playwright 設定で起動。`.env.local` 読み込み） |
 | `npm run test:e2e:api` | API 系 E2E のみ |
