@@ -1,16 +1,7 @@
-// そのまま差し替えで動く「圧縮＋5枚対応＋プレビュー付き」完成コード
-// 画像最大5枚アップロード
-// 自動圧縮（800px + 品質0.7）
-// プレビュー表示
-// API送信
-// コピー機能
-// Vision対応
-// 認証機能対応
-// 履歴保存・CRUD対応
-
+// 画像最大5枚・圧縮・プレビュー・API・認証・履歴 CRUD
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useId } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
@@ -29,6 +20,7 @@ type Product = {
 
 export default function Home() {
   const router = useRouter()
+  const fileInputId = useId()
 
   const [inputText, setInputText] = useState("")
   const [result, setResult] = useState<Product | null>(null)
@@ -37,11 +29,20 @@ export default function Home() {
   const [images, setImages] = useState<string[]>([])
   const [userId, setUserId] = useState<string | null>(null)
 
-  // 編集用
   const [editingItem, setEditingItem] = useState<Product | null>(null)
   const [editTitle, setEditTitle] = useState("")
   const [editDesc, setEditDesc] = useState("")
   const [editTags, setEditTags] = useState("")
+
+  const fetchItems = async (uid: string) => {
+    const { data } = await supabase
+      .from("products")
+      .select("*")
+      .eq("user_id", uid)
+      .order("created_at", { ascending: false })
+
+    setItems(data || [])
+  }
 
   useEffect(() => {
     const init = async () => {
@@ -54,21 +55,11 @@ export default function Home() {
       }
 
       setUserId(session.user.id)
-      fetchItems(session.user.id)
+      await fetchItems(session.user.id)
     }
 
-    init()
-  }, [])
-
-  const fetchItems = async (uid: string) => {
-    const { data } = await supabase
-      .from("products")
-      .select("*")
-      .eq("user_id", uid)
-      .order("created_at", { ascending: false })
-
-    setItems(data || [])
-  }
+    void init()
+  }, [router])
 
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve) => {
@@ -176,7 +167,6 @@ export default function Home() {
     if (userId) fetchItems(userId)
   }
 
-  // 🔥 履歴用コピー（追加）
   const handleCopyItem = async (item: Product) => {
     const text = `
 ${item.title}
@@ -195,103 +185,292 @@ ${item.hashtags?.join(" ")}
   }
 
   return (
-    <div style={{ maxWidth: 900, margin: "40px auto", padding: 20 }}>
-      <h1>フリマ出品支援アプリ</h1>
+    <div className="min-h-svh bg-rose-50 text-zinc-900">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
+              フリマ出品支援アプリ
+            </h1>
+            <p className="mt-2 text-base text-zinc-600">
+              画像とメモから出品文を生成・履歴管理
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="self-start rounded-lg border border-zinc-300 bg-white px-4 py-2 text-base font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50"
+          >
+            ログアウト
+          </button>
+        </header>
 
-      <button onClick={handleLogout}>ログアウト</button>
+        <div className="mb-10 grid gap-6 lg:grid-cols-2">
+          {/* 入力 */}
+          <section
+            className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
+            aria-labelledby="input-heading"
+          >
+            <h2
+              id="input-heading"
+              className="mb-4 text-xl font-semibold text-zinc-900"
+            >
+              入力
+            </h2>
+            <p className="mb-2 text-base font-medium text-zinc-700">画像 (最大5枚)</p>
+            <label
+              htmlFor={fileInputId}
+              className="mb-4 flex min-h-[120px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50/80 px-4 py-6 text-center transition hover:border-zinc-400 hover:bg-zinc-50"
+            >
+              <span className="text-base font-medium text-zinc-800">
+                クリックして画像を選択
+              </span>
+              <span className="mt-1 text-sm text-zinc-500">
+                JPEG / PNG など・自動で圧縮されます
+              </span>
+              <input
+                id={fileInputId}
+                type="file"
+                accept="image/*"
+                multiple
+                className="sr-only"
+                onChange={handleImageChange}
+              />
+            </label>
+            {images.length > 0 && (
+              <div className="mb-5 flex flex-wrap gap-2">
+                {images.map((img, i) => (
+                  <img
+                    key={i}
+                    src={img}
+                    width={100}
+                    height={100}
+                    alt=""
+                    className="h-[100px] w-[100px] rounded-md border border-zinc-200 object-cover"
+                  />
+                ))}
+              </div>
+            )}
+            <label className="mb-1 block text-base font-medium text-zinc-700">
+              商品メモ・キーワード
+            </label>
+            <textarea
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="例：黒のスニーカー、使用感少なめ…"
+              className="mb-5 min-h-[100px] w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 shadow-inner placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-300"
+            />
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={loading}
+              className="w-full rounded-lg bg-zinc-900 py-3 text-base font-medium text-white shadow transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loading ? "生成中..." : "生成する"}
+            </button>
+          </section>
 
-      <textarea
-        value={inputText}
-        onChange={(e) => setInputText(e.target.value)}
-        style={{ width: "100%", height: 100 }}
-      />
+          {/* 今回の生成結果 */}
+          <section
+            className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
+            aria-labelledby="result-heading"
+          >
+            <p
+              id="result-heading"
+              className="mb-4 text-xl font-semibold text-zinc-900"
+            >
+              今回の生成結果
+            </p>
+            {result ? (
+              <div className="text-base">
+                <h2 className="text-xl font-semibold text-zinc-900 sm:text-2xl">
+                  {result.title}
+                </h2>
+                <p className="mt-2 whitespace-pre-wrap text-zinc-800 leading-relaxed">
+                  {result.description}
+                </p>
+                <div
+                  className="my-4 border-t border-zinc-200"
+                  role="separator"
+                  aria-hidden
+                />
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-1.5">
+                    {result.hashtags?.map((tag, i) => (
+                      <span
+                        key={i}
+                        className="rounded-md bg-zinc-100 px-2 py-0.5 text-sm text-zinc-800"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-zinc-800">
+                    <span className="font-medium">カテゴリ:</span>{" "}
+                    {result.categories?.join(", ")}
+                  </p>
+                  <p className="text-zinc-800">
+                    <span className="font-medium">ブランド:</span>{" "}
+                    {result.brands?.join(", ")}
+                  </p>
+                  <p className="text-zinc-800">
+                    <span className="font-medium">価格:</span> {result.price}円
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-base leading-relaxed text-zinc-500">
+                「生成する」を押すと、ここにタイトル・説明・タグなどが表示されます。
+              </p>
+            )}
+          </section>
+        </div>
 
-      <input type="file" multiple onChange={handleImageChange} />
+        {/* 履歴 */}
+        <section aria-labelledby="history-title">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 id="history-title" className="text-2xl font-bold text-zinc-900">
+              履歴
+            </h2>
+            <span className="text-base text-zinc-500">{items.length}件</span>
+          </div>
 
-      <div style={{ display: "flex", gap: 10 }}>
-        {images.map((img, i) => (
-          <img key={i} src={img} width={100} />
-        ))}
+          {items.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-zinc-300 bg-white/80 px-4 py-8 text-center text-base text-zinc-500">
+              履歴がありません
+            </p>
+          ) : (
+            <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {items.map((item) => (
+                <li
+                  key={item.id}
+                  className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm"
+                >
+                  <h3 className="text-lg font-semibold text-zinc-900 sm:text-xl">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 text-base text-zinc-800 leading-relaxed whitespace-pre-wrap">
+                    {item.description}
+                  </p>
+                  <div
+                    className="my-3 border-t border-zinc-200"
+                    role="separator"
+                    aria-hidden
+                  />
+                  <div className="min-h-0 flex-1 space-y-2">
+                    <div className="flex flex-wrap gap-1.5">
+                      {item.hashtags?.map((tag, i) => (
+                        <span
+                          key={i}
+                          className="rounded-md bg-zinc-100 px-2 py-0.5 text-sm text-zinc-800"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-base text-zinc-800">
+                      <span className="font-medium">カテゴリ:</span>{" "}
+                      {item.categories?.join(", ")}
+                    </p>
+                    <p className="text-base text-zinc-800">
+                      <span className="font-medium">ブランド:</span>{" "}
+                      {item.brands?.join(", ")}
+                    </p>
+                    <p className="text-base text-zinc-800">
+                      <span className="font-medium">価格:</span> {item.price}円
+                    </p>
+                    {item.images && item.images.length > 0 && (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {item.images.map((img, i) => (
+                          <img
+                            key={i}
+                            src={img}
+                            width={80}
+                            height={80}
+                            alt=""
+                            className="h-20 w-20 rounded border border-zinc-200 object-cover"
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(item)}
+                      className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base font-medium text-zinc-800 hover:bg-zinc-50"
+                    >
+                      編集
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(item.id!)}
+                      className="rounded-lg border border-rose-200 bg-rose-100 px-3 py-2 text-base font-medium text-rose-800 hover:bg-rose-200"
+                    >
+                      削除
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyItem(item)}
+                      className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base font-medium text-zinc-800 hover:bg-zinc-50"
+                    >
+                      コピー
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
 
-      <button onClick={handleGenerate} disabled={loading}>
-        {loading ? "生成中..." : "生成する"}
-      </button>
-
-      {/* 🔥 生成結果（コピー削除済み） */}
-      {result && (
-        <div style={{ marginTop: 30 }}>
-          <h2>{result.title}</h2>
-          <p>{result.description}</p>
-
-          <div>
-            {result.hashtags?.map((tag, i) => (
-              <span key={i}>{tag} </span>
-            ))}
-          </div>
-
-          <p><b>カテゴリ:</b> {result.categories?.join(", ")}</p>
-          <p><b>ブランド:</b> {result.brands?.join(", ")}</p>
-          <p><b>価格:</b> {result.price}円</p>
-
-        </div>
-      )}
-
-      <h2>履歴</h2>
-
-      {items.length === 0 && <p>履歴がありません</p>}
-
-      {items.map((item) => (
-        <div key={item.id} style={{ border: "1px solid #ccc", marginTop: 10, padding: 10 }}>
-          <h3>{item.title}</h3>
-          <p>{item.description}</p>
-
-          <div>
-            {item.hashtags?.map((tag, i) => (
-              <span key={i}>{tag} </span>
-            ))}
-          </div>
-
-          <p><b>カテゴリ:</b> {item.categories?.join(", ")}</p>
-          <p><b>ブランド:</b> {item.brands?.join(", ")}</p>
-          <p><b>価格:</b> {item.price}円</p>
-
-          <div style={{ display: "flex", gap: 5 }}>
-            {item.images?.map((img, i) => (
-              <img key={i} src={img} width={80} />
-            ))}
-          </div>
-
-          <div style={{ display: "flex", gap: 10 }}>
-            <button onClick={() => openEditModal(item)}>編集</button>
-            <button onClick={() => handleDelete(item.id!)}>削除</button>
-            <button onClick={() => handleCopyItem(item)}>コピー</button>
-          </div>
-        </div>
-      ))}
-
-      {/* モーダル */}
       {editingItem && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          background: "rgba(0,0,0,0.5)",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center"
-        }}>
-          <div style={{ background: "#fff", padding: 20, borderRadius: 8, width: 500 }}>
-            <h2>編集</h2>
-
-            <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} style={{ width: "100%", marginBottom: 10 }} />
-            <textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} style={{ width: "100%", height: 150, marginBottom: 10 }} />
-            <input value={editTags} onChange={(e) => setEditTags(e.target.value)} style={{ width: "100%", marginBottom: 10 }} />
-
-            <button onClick={handleSaveEdit}>保存</button>
-            <button onClick={() => setEditingItem(null)}>キャンセル</button>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="presentation"
+        >
+          <div
+            className="w-full max-w-lg rounded-lg bg-white p-5 shadow-xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="edit-dialog-title"
+          >
+            <h2 id="edit-dialog-title" className="text-lg font-semibold text-zinc-900">
+              編集
+            </h2>
+            <input
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              className="mb-2 mt-3 w-full rounded border border-zinc-200 px-2 py-1.5 text-sm"
+            />
+            <textarea
+              value={editDesc}
+              onChange={(e) => setEditDesc(e.target.value)}
+              className="mb-2 w-full rounded border border-zinc-200 px-2 py-1.5 text-sm"
+              rows={5}
+            />
+            <input
+              value={editTags}
+              onChange={(e) => setEditTags(e.target.value)}
+              className="mb-3 w-full rounded border border-zinc-200 px-2 py-1.5 text-sm"
+              placeholder="タグをスペース区切り"
+            />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleSaveEdit}
+                className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
+              >
+                保存
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingItem(null)}
+                className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium"
+              >
+                キャンセル
+              </button>
+            </div>
           </div>
         </div>
       )}
