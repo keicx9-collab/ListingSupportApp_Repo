@@ -1,4 +1,6 @@
 export type Product = {
+  id?: string
+  user_id?: string
   title: string
   description: string
   categories: string[]
@@ -6,4 +8,5 @@ export type Product = {
   condition: string
   price: number
   hashtags: string[]
+  images?: string[]
 }
