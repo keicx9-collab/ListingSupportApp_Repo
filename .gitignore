@@ -27,6 +27,7 @@
 # misc
 .DS_Store
 *.pem
+/_bak/
 
 # debug
 npm-debug.log*

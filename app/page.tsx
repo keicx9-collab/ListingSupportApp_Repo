@@ -157,13 +157,12 @@ export default function Home() {
   }
 
   const handleCopyItem = async (item: Product) => {
-    const text = `
-${item.title}
+    const text = [
+      item.title,
+      item.description,
+      item.hashtags?.join(" ")
+    ].filter(Boolean).join("\n\n")
 
-${item.description}
-
-${item.hashtags?.join(" ")}
-`
     await navigator.clipboard.writeText(text)
     alert("コピーしました")
   }
