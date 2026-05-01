@@ -86,21 +86,21 @@ export function HistoryList({
                 <button
                   type="button"
                   onClick={() => onEdit(item)}
-                  className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base font-medium text-zinc-800 hover:bg-zinc-50"
+                  className="cursor-pointer rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base font-medium text-zinc-800 transition hover:bg-zinc-200"
                 >
                   編集
                 </button>
                 <button
                   type="button"
                   onClick={() => onDelete(item.id!)}
-                  className="rounded-lg border border-rose-200 bg-rose-100 px-3 py-2 text-base font-medium text-rose-800 hover:bg-rose-200"
+                  className="cursor-pointer rounded-lg border border-rose-200 bg-rose-100 px-3 py-2 text-base font-medium text-rose-800 hover:bg-rose-200"
                 >
                   削除
                 </button>
                 <button
                   type="button"
                   onClick={() => onCopy(item)}
-                  className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base font-medium text-zinc-800 hover:bg-zinc-50"
+                  className="cursor-pointer rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base font-medium text-zinc-800 transition hover:bg-zinc-200"
                 >
                   コピー
                 </button>

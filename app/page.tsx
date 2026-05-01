@@ -1,7 +1,7 @@
 // 画像最大5枚・圧縮・プレビュー・API・認証・履歴 CRUD
 "use client"
 
-import { useState, useEffect, useId } from "react"
+import { useState, useEffect, useId, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import type { Product } from "@/types/product"
@@ -10,9 +10,12 @@ import { HistoryList } from "./components/HistoryList"
 export default function Home() {
   const router = useRouter()
   const fileInputId = useId()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [inputText, setInputText] = useState("")
   const [result, setResult] = useState<Product | null>(null)
+  const [resultSourceText, setResultSourceText] = useState("")
+  const [resultSourceImages, setResultSourceImages] = useState<string[]>([])
   const [items, setItems] = useState<Product[]>([])
   const [loading, setLoading] = useState(false)
   const [images, setImages] = useState<string[]>([])
@@ -94,6 +97,11 @@ export default function Home() {
   const handleGenerate = async () => {
     setLoading(true)
     setResult(null)
+    setResultSourceText("")
+    setResultSourceImages([])
+
+    const snapText = inputText
+    const snapImages = [...images]
 
     try {
       const { data } = await supabase.auth.getSession()
@@ -112,11 +120,19 @@ export default function Home() {
       const dataRes = await res.json()
       setResult(dataRes)
 
+      if (!res.ok) return
+
+      setResultSourceText(snapText)
+      setResultSourceImages(snapImages)
+      setInputText("")
+      setImages([])
+      if (fileInputRef.current) fileInputRef.current.value = ""
+
       await supabase.from("products").insert([
         {
           user_id: session.user.id,
           ...dataRes,
-          images,
+          images: snapImages,
         },
       ])
 
@@ -187,7 +203,7 @@ export default function Home() {
           <button
             type="button"
             onClick={handleLogout}
-            className="self-start rounded-lg border border-zinc-300 bg-white px-4 py-2 text-base font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50"
+            className="cursor-pointer self-start rounded-lg border border-zinc-300 bg-white px-4 py-2 text-base font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-200"
           >
             ログアウト
           </button>
@@ -217,6 +233,7 @@ export default function Home() {
                 JPEG / PNG など・自動で圧縮されます
               </span>
               <input
+                ref={fileInputRef}
                 id={fileInputId}
                 type="file"
                 accept="image/*"
@@ -252,7 +269,7 @@ export default function Home() {
               type="button"
               onClick={handleGenerate}
               disabled={loading}
-              className="w-full rounded-lg bg-zinc-900 py-3 text-base font-medium text-white shadow transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full cursor-pointer rounded-lg bg-zinc-900 py-3 text-base font-medium text-white shadow transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "生成中..." : "生成する"}
             </button>
@@ -271,6 +288,39 @@ export default function Home() {
             </p>
             {result ? (
               <div className="text-base">
+                <div
+                  className="mb-5 rounded-xl border border-zinc-200 bg-zinc-50/80 p-4"
+                  aria-label="生成用入力"
+                >
+                  <p className="mb-3 text-base font-semibold text-zinc-900">
+                    生成用入力
+                  </p>
+                  <p className="mb-2 text-base font-medium text-zinc-700">
+                    画像 (最大5枚)
+                  </p>
+                  {resultSourceImages.length > 0 ? (
+                    <div className="mb-4 flex flex-wrap gap-2">
+                      {resultSourceImages.map((img, i) => (
+                        <img
+                          key={i}
+                          src={img}
+                          width={100}
+                          height={100}
+                          alt=""
+                          className="h-[100px] w-[100px] rounded-md border border-zinc-200 object-cover"
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mb-4 text-base text-zinc-500">なし</p>
+                  )}
+                  <p className="mb-1 text-base font-medium text-zinc-700">
+                    商品メモ・キーワード
+                  </p>
+                  <p className="whitespace-pre-wrap text-zinc-800 leading-relaxed">
+                    {resultSourceText || "なし"}
+                  </p>
+                </div>
                 <h2 className="text-xl font-semibold text-zinc-900 sm:text-2xl">
                   {result.title}
                 </h2>
@@ -357,14 +407,14 @@ export default function Home() {
               <button
                 type="button"
                 onClick={handleSaveEdit}
-                className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
+                className="cursor-pointer rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700"
               >
                 保存
               </button>
               <button
                 type="button"
                 onClick={() => setEditingItem(null)}
-                className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium"
+                className="cursor-pointer rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-800 transition hover:bg-zinc-200"
               >
                 キャンセル
               </button>

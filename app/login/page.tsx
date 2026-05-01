@@ -137,7 +137,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-300"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 cursor-pointer rounded-md p-2 text-zinc-500 transition hover:bg-zinc-200 hover:text-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-300"
                   aria-pressed={showPassword}
                   aria-label={
                     showPassword
@@ -155,14 +155,14 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={handleLogin}
-              className="order-1 flex-1 rounded-lg bg-zinc-900 py-2.5 text-base font-medium text-white shadow transition hover:bg-zinc-800 sm:order-none"
+              className="order-1 flex-1 cursor-pointer rounded-lg bg-zinc-900 py-2.5 text-base font-medium text-white shadow transition hover:bg-zinc-700 sm:order-none"
             >
               ログイン
             </button>
             <button
               type="button"
               onClick={handleSignup}
-              className="order-2 flex-1 rounded-lg border border-zinc-300 bg-white py-2.5 text-base font-medium text-zinc-800 transition hover:bg-zinc-50 sm:order-none"
+              className="order-2 flex-1 cursor-pointer rounded-lg border border-zinc-300 bg-white py-2.5 text-base font-medium text-zinc-800 transition hover:bg-zinc-200 sm:order-none"
             >
               新規登録
             </button>
